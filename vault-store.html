@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="tl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberCodetext — Matrix Vault Store</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Rajdhani:wght@500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #030712;
+            --panel-bg: rgba(17, 24, 39, 0.85);
+            --primary: #10b981;
+            --primary-glow: rgba(16, 185, 129, 0.4);
+            --accent: #059669;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --border-color: rgba(16, 185, 129, 0.3);
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 15px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(16, 185, 129, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(5, 150, 105, 0.1) 0%, transparent 40%),
+                linear-gradient(rgba(3, 7, 18, 0.9), rgba(3, 7, 18, 0.9));
+        }
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 0 40px rgba(16, 185, 129, 0.15);
+            margin-top: 10px;
+        }
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--primary);
+            text-align: center;
+            font-size: 1.6rem;
+            margin-bottom: 5px;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px var(--primary-glow);
+        }
+        .subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .grid-store {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 10px;
+        }
+        .packet-card {
+            background: rgba(3, 7, 18, 0.7);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+            box-shadow: inset 0 0 10px rgba(16, 185, 129, 0.05);
+            overflow: hidden;
+        }
+        .packet-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 0 15px var(--primary-glow);
+            transform: translateY(-2px);
+        }
+        .packet-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            color: var(--primary);
+            margin-bottom: 6px;
+            word-break: break-all;
+        }
+        .packet-info {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            font-family: 'Share Tech Mono', monospace;
+        }
+        .packet-passkey-badge {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px dashed var(--primary);
+            padding: 6px 8px;
+            border-radius: 6px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.85rem;
+            color: #34d399;
+            margin-bottom: 12px;
+            word-break: break-all;
+        }
+        .packet-passkey-badge span {
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            display: block;
+            margin-bottom: 2px;
+            text-transform: uppercase;
+            font-family: 'Orbitron', sans-serif;
+        }
+        .card-actions {
+            display: flex;
+            gap: 6px;
+            width: 100%;
+        }
+        .btn-card {
+            flex: 1;
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 6px 4px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.65rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        .btn-card:hover {
+            background: var(--primary);
+            color: #030712;
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+        .btn-delete {
+            border-color: #ef4444;
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.15);
+        }
+        .btn-delete:hover {
+            background: #ef4444;
+            color: #fff;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+        }
+        .empty-vault {
+            text-align: center;
+            color: var(--text-muted);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            padding: 30px;
+            grid-column: 1 / -1;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(3, 7, 18, 0.85);
+            backdrop-filter: blur(8px);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 15px;
+        }
+        .modal-content {
+            background: var(--panel-bg);
+            border: 1px solid var(--primary);
+            width: 100%;
+            max-width: 450px;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 0 30px var(--primary-glow);
+        }
+        .modal-content h3 {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--primary);
+            margin-top: 0;
+            margin-bottom: 12px;
+            font-size: 1rem;
+            word-break: break-all;
+        }
+        .form-group { margin-bottom: 12px; }
+        label {
+            display: block;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.7rem;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+        input[type="password"], textarea {
+            width: 100%;
+            padding: 10px;
+            background: rgba(3, 7, 18, 0.6);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 8px;
+            color: var(--text-main);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.95rem;
+        }
+        textarea { height: 90px; resize: vertical; }
+        
+        .modal-btns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            margin-top: 10px;
+        }
+        .modal-btns .btn-card {
+            padding: 8px 2px;
+            font-size: 0.6rem;
+            letter-spacing: 0.5px;
+        }
+        .btn-full {
+            grid-column: span 2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>MATRIX VAULT</h1>
+        <div class="subtitle">Cloud Classified Packet Repository</div>
+
+        <div style="font-family: 'Orbitron', sans-serif; font-size: 0.85rem; color: var(--primary); margin-bottom: 10px; letter-spacing: 1px;">
+            > CLOUD SYNCED PACKETS LIBRARY:
+        </div>
+
+        <div class="grid-store" id="vaultGrid">
+            <div class="empty-vault">Naglo-load ng mga packet mula sa Cloud Firestore...</div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal" id="vaultModal">
+        <div class="modal-content">
+            <h3 id="modalPacketName">Access Packet</h3>
+            <div class="form-group">
+                <label for="modalPass">PASSKEY:</label>
+                <input type="password" id="modalPass" placeholder="Enter security passkey...">
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 5px;">
+                <label>EXTRACTED PAYLOAD:</label>
+                <textarea id="modalOutput" placeholder="Lilitaw dito ang data kapag na-unlock..." readonly></textarea>
+            </div>
+
+            <div class="modal-btns">
+                <button class="btn-card" id="decryptActionBtn">BASAHIN</button>
+                <button class="btn-card" id="decryptDownloadBtn">UNLOCK & DOWNLOAD</button>
+                <button class="btn-card btn-delete btn-full" id="closeModalBtn">ISARA</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyAT-zfPed-jFB8IJk6fiUS5MLpZPz5-Bio",
+          authDomain: "upload-387f1.firebaseapp.com",
+          projectId: "upload-387f1",
+          storageBucket: "upload-387f1.firebasestorage.app",
+          messagingSenderId: "920804534087",
+          appId: "1:920804534087:web:ef37700e958478ece8ce62"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const vaultGrid = document.getElementById('vaultGrid');
+        const vaultModal = document.getElementById('vaultModal');
+        
+        let activePacketData = null;
+        let activePacketName = "";
+        let cloudPackets = [];
+
+        async function fetchCloudVault() {
+            try {
+                const querySnapshot = await getDocs(collection(db, "packets"));
+                cloudPackets = [];
+                
+                querySnapshot.forEach((document) => {
+                    let data = document.data();
+                    cloudPackets.push({
+                        id: document.id,
+                        name: data.name,
+                        date: data.date,
+                        content: data.content,
+                        passkeyNote: data.passkeyNote || "Walang nakalagay" // Kinuha ang passkeyNote galing database
+                    });
+                });
+
+                renderVault();
+            } catch (err) {
+                console.error("Error fetching cloud vault:", err);
+                vaultGrid.innerHTML = `<div class="empty-vault" style="color: #ef4444;">Nabigong makakonekta sa Cloud Database. Suriin ang koneksyon.</div>`;
+            }
+        }
+
+        function renderVault() {
+            vaultGrid.innerHTML = '';
+
+            if (cloudPackets.length === 0) {
+                vaultGrid.innerHTML = `<div class="empty-vault">Walang nakitang cloud packet. Subukang mag-encrypt mula sa Encoder page upang lumabas ito rito.</div>`;
+                return;
+            }
+
+            cloudPackets.forEach((item, index) => {
+                let card = document.createElement('div');
+                card.className = 'packet-card';
+                card.innerHTML = `
+                    <div>
+                        <div class="packet-title">📦 ${item.name}</div>
+                        <div class="packet-info">Na-save noong: ${item.date}</div>
+                        <div class="packet-passkey-badge">
+                            <span>Posted Passkey:</span>
+                            ${item.passkeyNote}
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn-card" onclick="openPacket(${index})">Aksyunan</button>
+                        <button class="btn-card btn-delete" onclick="deletePacket('${item.id}')">Burahin</button>
+                    </div>
+                `;
+                vaultGrid.appendChild(card);
+            });
+        }
+
+        window.deletePacket = async function(docId) {
+            if (confirm("Sigurado ka bang gusto mong burahin ang packet na ito mula sa Cloud Vault?")) {
+                try {
+                    await deleteDoc(doc(db, "packets", docId));
+                    await fetchCloudVault();
+                } catch (err) {
+                    alert("Hindi mabura ang packet mula sa cloud.");
+                    console.error(err);
+                }
+            }
+        }
+
+        window.openPacket = function(index) {
+            let item = cloudPackets[index];
+            activePacketData = item.content;
+            activePacketName = item.name;
+            
+            document.getElementById('modalPacketName').textContent = `Access: ${item.name}`;
+            document.getElementById('modalPass').value = '';
+            document.getElementById('modalOutput').value = '';
+            vaultModal.style.display = 'flex';
+        }
+
+        document.getElementById('closeModalBtn').addEventListener('click', () => {
+            vaultModal.style.display = 'none';
+        });
+
+        async function deriveKey(password, salt) {
+            const enc = new TextEncoder();
+            const keyMaterial = await window.crypto.subtle.importKey(
+                "raw", enc.encode(password), { name: "PBKDF2" }, false, ["deriveKey"]
+            );
+            return window.crypto.subtle.deriveKey(
+                { name: "PBKDF2", salt: salt, iterations: 100000, hash: "SHA-256" },
+                keyMaterial,
+                { name: "AES-GCM", length: 256 },
+                false,
+                ["decrypt"]
+            );
+        }
+
+        async function processDecryption() {
+            let password = document.getElementById('modalPass').value;
+            if (!password || !activePacketData) {
+                alert("Ilagay ang passkey!");
+                return null;
+            }
+
+            try {
+                let binaryString = atob(activePacketData);
+                let bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+
+                let salt = bytes.slice(0, 16);
+                let iv = bytes.slice(16, 28);
+                let ciphertext = bytes.slice(28);
+
+                let key = await deriveKey(password, salt);
+                let decrypted = await window.crypto.subtle.decrypt(
+                    { name: "AES-GCM", iv: iv },
+                    key,
+                    ciphertext
+                );
+
+                return new TextDecoder().decode(decrypted);
+            } catch (err) {
+                alert("Mali ang passkey o kaya ay sirang file!");
+                console.error(err);
+                return null;
+            }
+        }
+
+        document.getElementById('decryptActionBtn').addEventListener('click', async function() {
+            let extractedText = await processDecryption();
+            if (extractedText !== null) {
+                document.getElementById('modalOutput').value = extractedText;
+            }
+        });
+
+        document.getElementById('decryptDownloadBtn').addEventListener('click', async function() {
+            let extractedText = await processDecryption();
+            if (extractedText !== null) {
+                let blob = new Blob([extractedText], { type: 'text/plain;charset=utf-8' });
+                let url = URL.createObjectURL(blob);
+                let link = document.createElement('a');
+                link.href = url;
+                let cleanName = activePacketName.replace('.codetext', '.txt');
+                link.download = "codetech_" + cleanName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        });
+
+        fetchCloudVault();
+    </script>
+</body>
+</html>
